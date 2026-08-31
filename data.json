@@ -1,0 +1,53 @@
+{
+  "groups": {
+    "A": {
+      "name": "Grupo 1",
+      "standings": [
+        { "team": "Coneteiros", "points": 0, "wins": 0, "draws": 0, "losses": 0, "gf": 0, "ga": 0 },
+        { "team": "Volcanos FC", "points": 0, "wins": 0, "draws": 0, "losses": 0, "gf": 0, "ga": 0 },
+        { "team": "Blesseds FC", "points": 0, "wins": 0, "draws": 0, "losses": 0, "gf": 0, "ga": 0 }
+      ],
+      "matches": [
+        { "id": "A1", "t1": "Coneteiros", "t2": "Volcanos FC", "played": false, "s1": 0, "s2": 0 },
+        { "id": "A2", "t1": "Coneteiros", "t2": "Blesseds FC", "played": false, "s1": 0, "s2": 0 },
+        { "id": "A3", "t1": "Volcanos FC", "t2": "Blesseds FC", "played": false, "s1": 0, "s2": 0 }
+      ]
+    },
+    "B": {
+      "name": "Grupo 2",
+      "standings": [
+        { "team": "Tibias FC", "points": 0, "wins": 0, "draws": 0, "losses": 0, "gf": 0, "ga": 0 },
+        { "team": "IceNugets", "points": 0, "wins": 0, "draws": 0, "losses": 0, "gf": 0, "ga": 0 },
+        { "team": "Caneladas FC", "points": 0, "wins": 0, "draws": 0, "losses": 0, "gf": 0, "ga": 0 }
+      ],
+      "matches": [
+        { "id": "B1", "t1": "Tibias FC", "t2": "IceNugets", "played": false, "s1": 0, "s2": 0 },
+        { "id": "B2", "t1": "Tibias FC", "t2": "Caneladas FC", "played": false, "s1": 0, "s2": 0 },
+        { "id": "B3", "t1": "IceNugets", "t2": "Caneladas FC", "played": false, "s1": 0, "s2": 0 }
+      ]
+    },
+    "C": {
+      "name": "Grupo 3",
+      "standings": [
+        { "team": "Biribas FC", "points": 0, "wins": 0, "draws": 0, "losses": 0, "gf": 0, "ga": 0 },
+        { "team": "Alta Cúpula FC", "points": 0, "wins": 0, "draws": 0, "losses": 0, "gf": 0, "ga": 0 },
+        { "team": "Inter de Meião", "points": 0, "wins": 0, "draws": 0, "losses": 0, "gf": 0, "ga": 0 }
+      ],
+      "matches": [
+        { "id": "C1", "t1": "Biribas FC", "t2": "Alta Cúpula FC", "played": false, "s1": 0, "s2": 0 },
+        { "id": "C2", "t1": "Biribas FC", "t2": "Inter de Meião", "played": false, "s1": 0, "s2": 0 },
+        { "id": "C3", "t1": "Alta Cúpula FC", "t2": "Inter de Meião", "played": false, "s1": 0, "s2": 0 }
+      ]
+    }
+  },
+  "qualified": [],
+  "bracket": {
+    "ej1": { "t1": null, "t2": null, "s1": null, "s2": null, "winner": null },
+    "ej2": { "t1": null, "t2": null, "s1": null, "s2": null, "winner": null },
+    "ej3": { "t1": null, "t2": null, "s1": null, "s2": null, "winner": null },
+    "sf1": { "t1": null, "t2": null, "s1": null, "s2": null, "winner": null },
+    "sf2": { "t1": null, "t2": null, "s1": null, "s2": null, "winner": null },
+    "final": { "t1": null, "t2": null, "s1": null, "s2": null, "winner": null }
+  },
+  "champion": null
+}

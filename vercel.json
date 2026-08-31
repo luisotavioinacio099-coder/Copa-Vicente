@@ -1,0 +1,10 @@
+{
+  "functions": {
+    "api/ler.js": {
+      "maxDuration": 10
+    },
+    "api/salvar.js": {
+      "maxDuration": 10
+    }
+  }
+}
