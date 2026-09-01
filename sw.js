@@ -1,5 +1,5 @@
 // Service Worker - Copa Vicente 2026
-const CACHE = 'copa-vicente-v2';
+const CACHE = 'copa-vicente-v3';
 
 const CORE_ASSETS = [
   './',

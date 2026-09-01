@@ -54,7 +54,15 @@ module.exports = async (req, res) => {
   }
 
   try {
-    const content = (req.body && req.body.data) ? req.body.data : (typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}));
+    const sent = (req.body && req.body.data) ? req.body.data : (typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}));
+    // Normaliza o estado para o formato canônico do app:
+    // { tournamentData, playersByTeam }. Se um cliente antigo enviar apenas
+    // os dados do torneio (grupos/eliminatórias), envolvemos na estrutura atual
+    // e, sem elenco, usamos null (o front então mantém o elenco padrão).
+    let content = sent;
+    if (!sent.tournamentData && sent.groups) {
+      content = { tournamentData: sent, playersByTeam: sent.playersByTeam || null };
+    }
     const row = { id: 1, dados: content, atualizado_em: new Date().toISOString() };
 
     const result = await supabaseRequest('POST', '/rest/v1/copa_dados?on_conflict=id', row, key);
