@@ -1253,6 +1253,8 @@
             champion: null
         };
 
+        const INITIAL_TOURNAMENT = JSON.parse(JSON.stringify(tournamentData));
+
         function getGroupSorted(groupKey) {
             return [...tournamentData.groups[groupKey].standings].sort((a, b) => {
                 if (b.points !== a.points) return b.points - a.points;
@@ -2037,10 +2039,23 @@
 
         function resetTournament() {
             if (!isAuthenticated) { openLogin(() => resetTournament()); return; }
-            if (confirm('Tem certeza que deseja reiniciar? Todos os resultados serão apagados.')) {
-                try { localStorage.removeItem(STORE_KEY); } catch (e) {}
-                location.reload();
-            }
+            if (!confirm('Tem certeza que deseja reiniciar o campeonato? Todos os resultados, gols e cartões serão apagados em TODOS os aparelhos.')) return;
+            // Restaura o estado inicial do torneio (zerado)
+            Object.keys(INITIAL_TOURNAMENT).forEach(k => tournamentData[k] = JSON.parse(JSON.stringify(INITIAL_TOURNAMENT[k])));
+            // Restaura o elenco padrão
+            const freshPlayers = defaultPlayers();
+            Object.keys(playersByTeam).forEach(t => delete playersByTeam[t]);
+            Object.keys(freshPlayers).forEach(t => playersByTeam[t] = freshPlayers[t]);
+            // Limpa o cache local deste aparelho
+            try { localStorage.removeItem(STORE_KEY); } catch (e) {}
+            // Reconstrói as rodadas com as datas e grava o estado zerado no servidor
+            initMatchDates();
+            Object.keys(tournamentData.groups).forEach(gk => {
+                tournamentData.groups[gk].matches.forEach(ensureMatchExtras);
+            });
+            saveState();
+            renderGroups();
+            renderBracket();
         }
 
         async function init() {
