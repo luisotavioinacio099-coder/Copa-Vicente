@@ -1,12 +1,23 @@
-// API da Vercel: Salva o data.json no repositório GitHub (faz commit)
+// API da Vercel: Salva os dados no Supabase (Postgres via PostgREST)
 // Armazenado em: api/salvar.js
 // Endpoint: /api/salvar  (POST com {"data": {...}})
 
 const https = require('https');
 
-function ghRequest(options, body) {
+function supabaseRequest(method, path, body, apikey) {
   return new Promise((resolve, reject) => {
-    const req = https.request(options, (res) => {
+    const payload = body ? JSON.stringify(body) : null;
+    const options = {
+      method,
+      headers: {
+        'apikey': apikey,
+        'Authorization': `Bearer ${apikey}`,
+        'Content-Type': 'application/json',
+        'Prefer': 'return=representation,resolution=merge-duplicates'
+      }
+    };
+    if (payload) options.headers['Content-Length'] = Buffer.byteLength(payload);
+    const req = https.request(process.env.SUPABASE_URL + path, options, (res) => {
       let b = '';
       res.on('data', (c) => (b += c));
       res.on('end', () => {
@@ -16,7 +27,7 @@ function ghRequest(options, body) {
       });
     });
     req.on('error', reject);
-    if (body) req.write(body);
+    if (payload) req.write(payload);
     req.end();
   });
 }
@@ -29,11 +40,8 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
   if (req.method !== 'POST') return res.status(405).json({ error: 'Método não permitido' });
 
-  const token = process.env.GITHUB_TOKEN;
-  const owner = process.env.GITHUB_OWNER;
-  const repo = process.env.GITHUB_REPO;
-  const branch = process.env.GITHUB_BRANCH || 'main';
-  const path = 'data.json';
+  const url = process.env.SUPABASE_URL;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
   const adminPassword = process.env.ADMIN_PASSWORD || 'sis2026';
   const sentPassword = req.body && req.body._password;
@@ -41,51 +49,18 @@ module.exports = async (req, res) => {
     return res.status(401).json({ error: 'Senha de administrador incorreta.' });
   }
 
-  if (!token || !owner || !repo) {
-    return res.status(500).json({ error: 'Configuração GitHub não definida nas variáveis de ambiente.' });
+  if (!url || !key) {
+    return res.status(500).json({ error: 'Configuração Supabase não definida nas variáveis de ambiente.' });
   }
 
   try {
-    const content = req.body && req.body.data ? JSON.stringify(req.body.data) : (typeof req.body === 'string' ? req.body : JSON.stringify(req.body || {}));
-    const base64 = Buffer.from(content, 'utf8').toString('base64');
+    const content = (req.body && req.body.data) ? req.body.data : (typeof req.body === 'string' ? JSON.parse(req.body) : (req.body || {}));
+    const row = { id: 1, dados: content, atualizado_em: new Date().toISOString() };
 
-    // Busca o SHA atual do arquivo (necessário para o GitHub fazer update)
-    const getRes = await ghRequest({
-      host: 'api.github.com',
-      path: `/repos/${owner}/${repo}/contents/${path}?ref=${branch}`,
-      method: 'GET',
-      headers: {
-        'User-Agent': 'copa-vicente',
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github+json'
-      }
-    });
+    const result = await supabaseRequest('POST', '/rest/v1/copa_dados?on_conflict=id', row, key);
 
-    let sha = null;
-    if (getRes.status === 200 && getRes.data.sha) sha = getRes.data.sha;
-
-    const putBody = JSON.stringify({
-      message: 'Atualização Copa Vicente',
-      content: base64,
-      branch,
-      sha: sha || undefined
-    });
-
-    const putRes = await ghRequest({
-      host: 'api.github.com',
-      path: `/repos/${owner}/${repo}/contents/${path}`,
-      method: 'PUT',
-      headers: {
-        'User-Agent': 'copa-vicente',
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github+json',
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(putBody)
-      }
-    }, putBody);
-
-    if (putRes.status >= 300) {
-      return res.status(putRes.status).json({ error: 'Falha ao salvar no GitHub', detail: putRes.data });
+    if (result.status >= 300) {
+      return res.status(result.status).json({ error: 'Falha ao salvar no Supabase', detail: result.data });
     }
 
     return res.status(200).json({ ok: true });

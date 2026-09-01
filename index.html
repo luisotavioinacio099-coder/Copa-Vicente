@@ -2,8 +2,16 @@
 <html lang="pt-BR">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Copa Vicente 2026</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <meta name="theme-color" content="#0f172a">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Copa Vicente">
+    <meta name="description" content="Copa Vicente 2026 - Acompanhe placares, artilharia e classificação">
+    <link rel="manifest" href="manifest.webmanifest">
+    <link rel="apple-touch-icon" href="icons/icon-180.png">
+    <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
     <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -19,10 +27,16 @@
             --border: #e2e8f0;
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         html { scroll-behavior: smooth; }
         body { scroll-padding-top: 70px; }
+
+        button, a, input, select, textarea, .clickable {
+            touch-action: manipulation;
+        }
+
+        a, button { -webkit-touch-callout: none; }
 
         body {
             font-family: 'Roboto', sans-serif;
@@ -957,12 +971,31 @@
 
         /* ===== MOBILE-FIRST ===== */
         @media (max-width: 640px) {
-            .container { padding: 24px 12px; }
+            .container { padding: 24px 12px 80px; }
+            body { scroll-padding-top: 0; }
 
-            .navbar { gap: 6px; padding: 10px 8px; }
-            .nav-link { padding: 7px 12px; font-size: 0.72rem; width: 100%; text-align: center; }
-            .navbar { display: grid; grid-template-columns: 1fr 1fr 1fr; }
-            .navbar .nav-link:nth-child(4) { grid-column: 1 / -1; }
+            .navbar {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                grid-template-rows: repeat(3, auto);
+                grid-auto-flow: row;
+                gap: 8px;
+                padding: 10px 8px;
+            }
+            .nav-link {
+                padding: 10px 8px;
+                font-size: 0.76rem;
+                width: 100%;
+                text-align: center;
+                min-height: 44px;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                order: 0;
+            }
 
             .section-title { font-size: 1.25rem; margin-bottom: 18px; }
             .sub-title { font-size: 1.05rem; }
@@ -999,9 +1032,7 @@
         }
 
         @media (max-width: 380px) {
-            .navbar { grid-template-columns: 1fr 1fr; }
-            .navbar .nav-link:nth-child(4) { grid-column: 1 / -1; }
-            .nav-link { font-size: 0.68rem; padding: 7px 8px; }
+            .nav-link { font-size: 0.68rem; padding: 9px 6px; }
             .title-section h1 { font-size: 1.6rem; letter-spacing: 1px; }
             .modal-player-name { font-size: 0.82rem; }
         }
@@ -1250,6 +1281,7 @@
         }
 
         const STORE_KEY = 'copaVicente2026';
+        let dataFromServer = false;
 
         function allTeamNames() {
             const names = [];
@@ -1265,7 +1297,7 @@
                 'Volcanos FC': ['Luiz Filipe', 'Jesus', 'João Gabriel', 'Victor Gabriel', 'Tiago', 'Diogo', 'Natan', 'Samuel'],
                 'Blesseds FC': ['Messias', 'Joaquim', 'Gabriel Alves', 'Samuel Santos', 'Enzo', 'Cauã', 'Murilo', 'Francisco'],
                 'Tibias FC': ['Luiz Gustavo', 'José Matheus', 'Heitor Victorio', 'Arthur', 'Nicolas', 'Matheus Samuel', 'Ícaro', 'Mateus Gabriel'],
-                'IceNugets': ['João Pedro', 'Alexandro', 'Isac', 'Juan', 'Rafael', 'Marcos', 'Eduardo'],
+                'IceNugets': ['João Pedro', 'Alexandro', 'Isac', 'Juan', 'Marcos', 'Eduardo'],
                 'Caneladas FC': ['Rafael Razionale', 'Erick Gabriel', 'Nicolas Guilherme', 'Vinícius Soares', 'Kaio', 'Endrews Rodrigues', 'Miguel'],
                 'Biribas FC': ['Davi', 'Kauã', 'João Pedro', 'Renan', 'Guilherme', 'Carlos', 'Kawan'],
                 'Alta Cúpula FC': ['Kauan', 'Rafael', 'Erick', 'Bruno', 'Gustavo', 'Rafael G. Ramos'],
@@ -1303,10 +1335,12 @@
                         if (data.playersByTeam) {
                             Object.keys(data.playersByTeam).forEach(t => playersByTeam[t] = data.playersByTeam[t]);
                         }
+                        dataFromServer = true;
                         return true;
                     }
                     if (data && data.groups) {
                         Object.keys(data).forEach(k => tournamentData[k] = data[k]);
+                        dataFromServer = true;
                         return true;
                     }
                 }
@@ -2016,13 +2050,22 @@
                 Object.keys(tournamentData.groups).forEach(gk => {
                     tournamentData.groups[gk].matches.forEach(ensureMatchExtras);
                 });
-                saveState();
+                // Só grava no servidor se o estado não veio dele
+                // (evita que um dispositivo vazio sobrescreva os dados compartilhados)
+                if (!dataFromServer) saveState();
             }
             renderGroups();
             renderBracket();
         }
 
         init();
+
+        // Registra o Service Worker (permite instalar como app e abrir offline)
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js').catch(() => {});
+            });
+        }
     </script>
 </body>
 </html>

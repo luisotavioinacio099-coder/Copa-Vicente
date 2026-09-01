@@ -1,12 +1,20 @@
-// API da Vercel: Lê o data.json do repositório GitHub
+// API da Vercel: Lê os dados salvos no Supabase (Postgres via PostgREST)
 // Armazenado em: api/ler.js
 // Endpoint: /api/ler
 
 const https = require('https');
 
-function ghRequest(options) {
+function supabaseRequest(method, path, apikey) {
   return new Promise((resolve, reject) => {
-    const req = https.request(options, (res) => {
+    const options = {
+      method,
+      headers: {
+        'apikey': apikey,
+        'Authorization': `Bearer ${apikey}`,
+        'Accept': 'application/json'
+      }
+    };
+    const req = https.request(process.env.SUPABASE_URL + path, options, (res) => {
       let body = '';
       res.on('data', (c) => (body += c));
       res.on('end', () => {
@@ -29,38 +37,25 @@ module.exports = async (req, res) => {
   if (req.method === 'OPTIONS') return res.status(200).end();
 
   try {
-    const token = process.env.GITHUB_TOKEN;
-    const owner = process.env.GITHUB_OWNER;
-    const repo = process.env.GITHUB_REPO;
-    const branch = process.env.GITHUB_BRANCH || 'main';
-    const path = 'data.json';
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-    if (!token || !owner || !repo) {
-      return res.status(500).json({ error: 'Configuração GitHub não definida nas variáveis de ambiente.' });
+    if (!url || !key) {
+      return res.status(500).json({ error: 'Configuração Supabase não definida nas variáveis de ambiente.' });
     }
 
-    const result = await ghRequest({
-      host: 'api.github.com',
-      path: `/repos/${owner}/${repo}/contents/${path}?ref=${branch}`,
-      method: 'GET',
-      headers: {
-        'User-Agent': 'copa-vicente',
-        'Authorization': `Bearer ${token}`,
-        'Accept': 'application/vnd.github+json'
-      }
-    });
+    const result = await supabaseRequest('GET', '/rest/v1/copa_dados?select=dados&id=eq.1', key);
 
-    if (result.status === 404) {
-      // arquivo não existe ainda, retorna objeto neutro
+    if (result.status !== 200) {
+      return res.status(result.status).json({ error: 'Falha ao ler do Supabase', detail: result.data });
+    }
+
+    const rows = result.data || [];
+    if (!rows.length || rows[0].dados === null || rows[0].dados === undefined) {
       return res.status(200).json(null);
     }
-    if (result.status !== 200) {
-      return res.status(result.status).json({ error: 'Falha ao ler do GitHub', detail: result.data });
-    }
 
-    const content = Buffer.from(result.data.content, 'base64').toString('utf8');
-    res.setHeader('Content-Type', 'application/json');
-    return res.status(200).send(content);
+    return res.status(200).json(rows[0].dados);
   } catch (e) {
     return res.status(500).json({ error: e.message });
   }
