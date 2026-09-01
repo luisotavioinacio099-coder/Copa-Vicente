@@ -2045,15 +2045,18 @@
 
         async function init() {
             const restored = await loadState();
-            if (!restored) {
+            let builtRounds = false;
+            if (!tournamentData.rounds) {
                 initMatchDates();
-                Object.keys(tournamentData.groups).forEach(gk => {
-                    tournamentData.groups[gk].matches.forEach(ensureMatchExtras);
-                });
-                // Só grava no servidor se o estado não veio dele
-                // (evita que um dispositivo vazio sobrescreva os dados compartilhados)
-                if (!dataFromServer) saveState();
+                builtRounds = true;
             }
+            Object.keys(tournamentData.groups).forEach(gk => {
+                tournamentData.groups[gk].matches.forEach(ensureMatchExtras);
+            });
+            // Grava no servidor quando as rodadas são geradas pela primeira vez
+            // (mantém o estado compartilhado completo, evitando que um dispositivo
+            //  vazio sobrescreva dados já existentes quando o servidor já tem dados)
+            if (builtRounds || !dataFromServer) saveState();
             renderGroups();
             renderBracket();
         }
