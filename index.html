@@ -634,6 +634,8 @@
         }
         .detail-goals { color: var(--dark); }
         .detail-cards { color: var(--muted); }
+        .detail-team-line { display: flex; gap: 6px; align-items: baseline; }
+        .detail-team-label { font-weight: 700; color: var(--dark); white-space: nowrap; }
 
         /* CHAVEAMENTO */
         .bracket-section {
@@ -1303,7 +1305,7 @@
                 'Caneladas FC': ['Rafael Razionale', 'Erick Gabriel', 'Nicolas Guilherme', 'Vinícius Soares', 'Kaio', 'Endrews Rodrigues', 'Miguel'],
                 'Biribas FC': ['Davi', 'Kauã', 'João Pedro', 'Renan', 'Guilherme', 'Carlos', 'Kawan'],
                 'Alta Cúpula FC': ['Kauan', 'Rafael', 'Erick', 'Bruno', 'Gustavo', 'Rafael G. Ramos'],
-                'Inter de Meião': ['Antônio', 'Kaiky', 'Heber', 'João Gabriel', 'Gabriela', 'Ruan', 'Luiz']
+                'Inter de Meião': ['Antônio', 'Kaiky', 'Heber', 'João Gabriel', 'Gabriela', 'Ruan', 'Luiz', 'Kauan']
             };
         }
 
@@ -1361,6 +1363,20 @@
             } catch (e) {
                 return false;
             }
+        }
+
+        function mergeDefaultPlayers() {
+            const defaults = defaultPlayers();
+            Object.keys(defaults).forEach(team => {
+                const existing = playersByTeam[team] || [];
+                const defaultsList = defaults[team];
+                const missing = defaultsList.filter(p => !existing.includes(p));
+                if (missing.length) {
+                    playersByTeam[team] = existing.concat(missing);
+                } else if (!playersByTeam[team]) {
+                    playersByTeam[team] = defaultsList;
+                }
+            });
         }
 
         function ensureMatchExtras(m) {
@@ -1991,10 +2007,22 @@
         function matchDetailHTML(m) {
             const parts = [];
             if (m && m.goals && m.goals.length) {
-                parts.push('<span class="detail-goals">⚽ ' + m.goals.map(g => `${g.player}${g.goals > 1 ? ' (' + g.goals + ')' : ''}`).join(', ') + '</span>');
+                [m.t1, m.t2].forEach(team => {
+                    const teamGoals = m.goals.filter(g => g.team === team);
+                    if (teamGoals.length) {
+                        const scorers = teamGoals.map(g => `${g.player}${g.goals > 1 ? ' (' + g.goals + ')' : ''}`).join(', ');
+                        parts.push(`<span class="detail-team-line"><span class="detail-team-label">⚽ ${team}:</span> ${scorers}</span>`);
+                    }
+                });
             }
             if (m && m.cards && m.cards.length) {
-                parts.push('<span class="detail-cards">' + m.cards.map(c => `${c.type === 'r' ? '🟥' : '🟨'} ${c.player}`).join(' ') + '</span>');
+                [m.t1, m.t2].forEach(team => {
+                    const teamCards = m.cards.filter(c => c.team === team);
+                    if (teamCards.length) {
+                        const cardList = teamCards.map(c => `${c.type === 'r' ? '🟥' : '🟨'} ${c.player}`).join(' ');
+                        parts.push(`<span class="detail-team-line"><span class="detail-team-label">📋 ${team}:</span> <span class="detail-cards">${cardList}</span></span>`);
+                    }
+                });
             }
             return parts.join(' ');
         }
@@ -2060,6 +2088,7 @@
 
         async function init() {
             const restored = await loadState();
+            mergeDefaultPlayers();
             let builtRounds = false;
             if (!tournamentData.rounds) {
                 initMatchDates();
